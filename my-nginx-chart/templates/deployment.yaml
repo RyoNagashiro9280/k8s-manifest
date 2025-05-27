@@ -33,16 +33,28 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
-        - name: {{ .Chart.Name }}
-          {{- with .Values.securityContext }}
+        - name: php-fpm 
+          {{- with .Values.phpFpmSecurityContext }} 
           securityContext:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          image: "{{ .Values.phpFpmImage.repository }}:{{ .Values.phpFpmImage.tag | default .Chart.AppVersion }}" 
+          imagePullPolicy: {{ .Values.phpFpmImage.pullPolicy }}
           ports:
-            - name: http
-              containerPort: {{ .Values.service.port }}
+            - name: http-fpm 
+              containerPort: 9000 
+              protocol: TCP
+
+        - name: nginx 
+          {{- with .Values.nginxSecurityContext }} 
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          image: "{{ .Values.nginxImage.repository }}:{{ .Values.nginxImage.tag | default .Chart.AppVersion }}" 
+          imagePullPolicy: {{ .Values.nginxImage.pullPolicy }}
+          ports:
+            - name: http 
+              containerPort: 80 
               protocol: TCP
           {{- with .Values.livenessProbe }}
           livenessProbe:
