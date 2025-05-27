@@ -59,6 +59,9 @@ spec:
             if [ ! -L /var/www/html/public/storage ]; then php artisan storage:link; else echo "Storage already linked."; fi && \
             echo "Initialization complete.";
         workingDir: /var/www/html
+        envFrom:
+        - secretRef:
+            name: {{ include "my-nginx-chart.fullname" . }}-laravel-env
         volumeMounts:
         - name: laravel-public-storage
           mountPath: /var/www/html/public
