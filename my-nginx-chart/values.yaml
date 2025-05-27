@@ -1,128 +1,43 @@
-# Default values for your chart.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
+# k8s-learn-web-chart/values.yaml
 
-replicaCount: 1 # アプリケーションのPodを何個起動するか (CIでここを3にしたんやったな)
-# PHP-FPMコンテナ用のイメージ設定
-phpFpmImage:
-  repository: rnagashiro/nqg1t0-laravel-app-fpm # ★あんたのDocker Hubユーザー名とPHP-FPMイメージ名
+replicaCount: 2 # ★ Podの数
+
+image:
+  repository: rnagashiro/k8s-learn-web # ★ Docker Hubのユーザー名/イメージ名 (Secretから取るのが望ましい)
   pullPolicy: IfNotPresent
-  tag: "2e7594d" # ← CIがここを新しいコミットハッシュなどに書き換える
-# Nginxコンテナ用のイメージ設定
-nginxImage:
-  repository: rnagashiro/nqg1t0-nginx-web # ★あんたのDocker Hubユーザー名とNginxイメージ名
-  pullPolicy: IfNotPresent
-  tag: "2e7594d" # ← CIがここを新しいコミットハッシュなどに書き換える
-imagePullSecrets: [] # プライベートリポジトリからイメージをプルする場合に使うSecretの名前
-nameOverride: "" # チャート名から作られるリソース名を上書きしたい場合
-fullnameOverride: "" # 完全にリソース名を指定したい場合 (例: my-laravel-app)
+  tag: "initial-tag" # ★ CIがここを書き換える (例: github.sha)
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
 serviceAccount:
-  # Specifies whether a service account should be created for the application pods
   create: true
-  # Annotations to add to the service account
   annotations: {}
-  # The name of the service account to use.
-  # If not set and create is true, a name is generated using the fullname template.
-  # If create is false, this name is used if set, otherwise 'default' is used.
   name: ""
-podAnnotations: {} # Podに共通で付けたいアノテーション
-podLabels: {} # Podに共通で付けたい追加のラベル
+
+podAnnotations: {}
 podSecurityContext: {}
-# fsGroup: 2000
 
-# Individual container security contexts
-# phpFpmSecurityContext: {}
-# nginxSecurityContext: {}
-# capabilities:
-#   drop:
-#   - ALL
-# readOnlyRootFilesystem: true
-# runAsNonRoot: true
-# runAsUser: 1000
-
-# Service definition
 service:
-  # This would be the service for Nginx that the Ingress points to
-  type: ClusterIP # Ingressを使うのでClusterIPでOK
-  port: 80 # Serviceが公開するポート (NginxコンテナのHTTPポートに合わせる)
-  # targetPort: http # DeploymentのNginxコンテナのポート名 (例: http) を指定するとより明確
-# Ingress settings
-ingress:
-  enabled: true # Ingressリソースを作るかどうか
-  className: "nginx" # ★使ってるIngress Controllerのクラス名
-  annotations: # Ingressに付けたいアノテーション
-    cert-manager.io/cluster-issuer: letsencrypt-prod # ★Cert-ManagerのClusterIssuer名
-    # nginx.ingress.kubernetes.io/proxy-body-size: "100m" # 必要ならファイルアップロード上限など
-  hosts:
-    - host: nqg1t0.com # ★アプリケーションを公開するドメイン名
-      paths:
-        - path: / # 公開するパス
-          pathType: ImplementationSpecific # または Prefix
-          # backend: # 通常、HelmテンプレートがDeployment名とServiceポートから自動生成
-  tls:
-    - secretName: my-app-tls-prod # ★証明書を保存するSecretの名前 (ドメイン名に合わせるのが分かりやすい)
-      hosts:
-        - nqg1t0.com # ★TLSを有効にするホスト名 (上のhosts.hostと同じにする)
-# Resource requests and limits for Pods
-resources: {}
-# phpFpm:
-#   limits:
-#     cpu: 500m
-#     memory: 512Mi
-#   requests:
-#     cpu: 250m
-#     memory: 256Mi
-# nginx:
-#   limits:
-#     cpu: 200m
-#     memory: 128Mi
-#   requests:
-#     cpu: 100m
-#     memory: 64Mi
+  type: ClusterIP
+  port: 80
+  targetPort: 3000 # ★ コンテナのポート (Deploymentと合わせる)
 
-# Liveness and Readiness probes for containers
-# These should be defined in the Deployment template, potentially configured by values here.
-# livenessProbe:
-#   phpFpm:
-#     enabled: true
-#     # ...
-#   nginx:
-#     enabled: true
-#     # ...
-# readinessProbe:
-#   phpFpm:
-#     enabled: true
-#     # ...
-#   nginx:
-#     enabled: true
-#     # ...
+resources: # ★ リソース要求/制限
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
+
 autoscaling:
-  enabled: false # HorizontalPodAutoscaler (HPA) を使うかどうか
+  enabled: false
   minReplicas: 1
-  maxReplicas: 5 # 状況に合わせて調整
+  maxReplicas: 10
   targetCPUUtilizationPercentage: 80
-  # targetMemoryUtilizationPercentage: 80
-# --- Laravel Application Specific Configuration ---
-# (ここはコメントアウトのまま。実際の値はKubernetesのSecretやConfigMapで管理するのが推奨)
-# database:
-#   secretName: my-laravel-db-secret
-#   host: my-mysql-service
-#   port: 3306
-#   name: my_laravel_db
-# app:
-#   env: production
-#   debug: false
-#   url: https://nqg1t0.com
-#   key: "" # Secretで管理
-#   timezone: "Asia/Tokyo"
-#   locale: "ja"
-# cache:
-#   driver: redis
-# session:
-#   driver: redis
-# queue:
-#   connection: redis
-# --- End of Laravel Application Specific Configuration ---
+
 nodeSelector: {}
 tolerations: []
 affinity: {}
