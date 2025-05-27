@@ -7,12 +7,12 @@ replicaCount: 1 # アプリケーションのPodを何個起動するか (CIで�
 phpFpmImage:
   repository: rnagashiro/nqg1t0-laravel-app-fpm # ★あんたのDocker Hubユーザー名とPHP-FPMイメージ名
   pullPolicy: IfNotPresent
-  tag: "a0cafda" # ← CIがここを新しいコミットハッシュなどに書き換える
+  tag: "2e7594d" # ← CIがここを新しいコミットハッシュなどに書き換える
 # Nginxコンテナ用のイメージ設定
 nginxImage:
   repository: rnagashiro/nqg1t0-nginx-web # ★あんたのDocker Hubユーザー名とNginxイメージ名
   pullPolicy: IfNotPresent
-  tag: "a0cafda" # ← CIがここを新しいコミットハッシュなどに書き換える
+  tag: "2e7594d" # ← CIがここを新しいコミットハッシュなどに書き換える
 imagePullSecrets: [] # プライベートリポジトリからイメージをプルする場合に使うSecretの名前
 nameOverride: "" # チャート名から作られるリソース名を上書きしたい場合
 fullnameOverride: "" # 完全にリソース名を指定したい場合 (例: my-laravel-app)
