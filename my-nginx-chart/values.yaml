@@ -1,19 +1,25 @@
-# replicaCount: 3 # これはPod全体の数
+# Default values for your chart.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1 # アプリケーションのPodを何個起動するか (CIでここを3にしたんやったな)
 
 # PHP-FPMコンテナ用のイメージ設定
 phpFpmImage:
-  repository: ${{ env.DOCKERHUB_USERNAME }}/${{ env.PHP_FPM_IMAGE_NAME }} # CIで使うフルパスを書いてもええし、
-  # ArgoCD側で上書きするならリポジトリ名だけでもOK
+  repository: ryonagashiro/nqg1t0-laravel-app-fpm # ★あんたのDocker Hubユーザー名とPHP-FPMイメージ名
   pullPolicy: IfNotPresent
-  tag: "a33c50a" # ← CIがここを書き換える
-# Nginxコンテナ用のイメージ設定 (もしNginxもカスタムイメージなら)
+  tag: "latest" # ← CIがここを新しいコミットハッシュなどに書き換える
+
+# Nginxコンテナ用のイメージ設定
 nginxImage:
-  repository: ${{ env.DOCKERHUB_USERNAME }}/${{ env.NGINX_IMAGE_NAME }}
+  repository: ryonagashiro/nqg1t0-nginx-web # ★あんたのDocker Hubユーザー名とNginxイメージ名
   pullPolicy: IfNotPresent
-  tag: "a33c50a" # ← CIがここを書き換える (もしNginxイメージもCIで作るなら)
+  tag: "latest" # ← CIがここを新しいコミットハッシュなどに書き換える
+
 imagePullSecrets: [] # プライベートリポジトリからイメージをプルする場合に使うSecretの名前
-nameOverride: "" # チャート名から作られるリソース名を上書きしたい場合
+nameOverride: ""     # チャート名から作られるリソース名を上書きしたい場合
 fullnameOverride: "" # 完全にリソース名を指定したい場合 (例: my-laravel-app)
+
 serviceAccount:
   # Specifies whether a service account should be created for the application pods
   create: true
@@ -23,81 +29,74 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template.
   # If create is false, this name is used if set, otherwise 'default' is used.
   name: ""
+
 podAnnotations: {} # Podに共通で付けたいアノテーション
-podLabels: {} # Podに共通で付けたい追加のラベル
+podLabels: {}      # Podに共通で付けたい追加のラベル
+
 podSecurityContext: {}
-# fsGroup: 2000
+  # fsGroup: 2000
 
 # Individual container security contexts
 # phpFpmSecurityContext: {}
 # nginxSecurityContext: {}
-# capabilities:
-#   drop:
-#   - ALL
-# readOnlyRootFilesystem: true
-# runAsNonRoot: true
-# runAsUser: 1000
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
 
-# Service definition for PHP-FPM (if Nginx needs to reach it via a separate service)
-# Or, this could be the main service that Ingress points to if Nginx is a sidecar.
-# For a typical setup where Ingress points to Nginx, and Nginx proxies to PHP-FPM,
-# you might have one service for Nginx (exposed via Ingress) and another internal
-# service for PHP-FPM if they are in different Deployments.
-# If Nginx and PHP-FPM are in the same Pod, Nginx can reach PHP-FPM via localhost.
-# This example assumes Ingress will point to an Nginx service.
+# Service definition
 service:
   # This would be the service for Nginx that the Ingress points to
   type: ClusterIP # Ingressを使うのでClusterIPでOK
-  port: 80 # Serviceが公開するポート (NginxコンテナのHTTPポートに合わせる)
+  port: 80        # Serviceが公開するポート (NginxコンテナのHTTPポートに合わせる)
   # targetPort: http # DeploymentのNginxコンテナのポート名 (例: http) を指定するとより明確
+
 # Ingress settings
 ingress:
-  enabled: true
-  className: "nginx"
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
+  enabled: true # Ingressリソースを作るかどうか
+  className: "nginx" # ★使ってるIngress Controllerのクラス名
+  annotations: # Ingressに付けたいアノテーション
+    cert-manager.io/cluster-issuer: letsencrypt-prod # ★Cert-ManagerのClusterIssuer名
+    # nginx.ingress.kubernetes.io/proxy-body-size: "100m" # 必要ならファイルアップロード上限など
   hosts:
-    - host: nqg1t0.com # または argocd.nqg1t0.com とか、アプリのドメイン
+    - host: nqg1t0.com # ★アプリケーションを公開するドメイン名
       paths:
-        - path: /
-          pathType: ImplementationSpecific
+        - path: / # 公開するパス
+          pathType: ImplementationSpecific # または Prefix
+          # backend: # 通常、HelmテンプレートがDeployment名とServiceポートから自動生成
   tls:
-    - secretName: my-app-tls-prod # アプリ用のSecret名
-      hosts:
-        - nqg1t0.com # アプリ用のドメイン
+   - secretName: my-app-tls-prod # ★証明書を保存するSecretの名前 (ドメイン名に合わせるのが分かりやすい)
+     hosts:
+       - nqg1t0.com # ★TLSを有効にするホスト名 (上のhosts.hostと同じにする)
+
 # Resource requests and limits for Pods
-# It's good practice to define these for both PHP-FPM and Nginx containers
-# in your Deployment template, possibly referencing values from here.
 resources: {}
-# phpFpm:
-#   limits:
-#     cpu: 500m
-#     memory: 512Mi
-#   requests:
-#     cpu: 250m
-#     memory: 256Mi
-# nginx:
-#   limits:
-#     cpu: 200m
-#     memory: 128Mi
-#   requests:
-#     cpu: 100m
-#     memory: 64Mi
+  # phpFpm:
+  #   limits:
+  #     cpu: 500m
+  #     memory: 512Mi
+  #   requests:
+  #     cpu: 250m
+  #     memory: 256Mi
+  # nginx:
+  #   limits:
+  #     cpu: 200m
+  #     memory: 128Mi
+  #   requests:
+  #     cpu: 100m
+  #     memory: 64Mi
 
 # Liveness and Readiness probes for containers
 # These should be defined in the Deployment template, potentially configured by values here.
-# Example structure if you want to control them from values.yaml:
 # livenessProbe:
 #   phpFpm:
 #     enabled: true
-#     httpGet:
-#       path: /ping-php-fpm # (PHP-FPMが応答するヘルスチェック用エンドポイントを別途用意する場合)
-#       port: 9000
+#     # ...
 #   nginx:
 #     enabled: true
-#     httpGet:
-#       path: /nginx-health # (Nginxのヘルスチェック用エンドポイント)
-#       port: http
+#     # ...
 # readinessProbe:
 #   phpFpm:
 #     enabled: true
@@ -105,48 +104,36 @@ resources: {}
 #   nginx:
 #     enabled: true
 #     # ...
+
 autoscaling:
   enabled: false # HorizontalPodAutoscaler (HPA) を使うかどうか
   minReplicas: 1
   maxReplicas: 5 # 状況に合わせて調整
   targetCPUUtilizationPercentage: 80
   # targetMemoryUtilizationPercentage: 80
-# --- Laravel Application Specific Configuration ---
-# These would typically be passed as environment variables to your PHP-FPM container,
-# often using Kubernetes Secrets for sensitive data and ConfigMaps for non-sensitive data.
-# It's NOT recommended to put sensitive values directly in values.yaml if this file is committed to Git.
-# Instead, you can reference existing Secrets/ConfigMaps or let CI manage them.
 
-# Example: Referencing an existing Secret for database credentials
+# --- Laravel Application Specific Configuration ---
+# (ここはコメントアウトのまま。実際の値はKubernetesのSecretやConfigMapで管理するのが推奨)
 # database:
-#   secretName: my-laravel-db-secret # DB_USERNAME, DB_PASSWORDなどが入ったSecret名
-#   host: my-mysql-service # Kubernetes内のDBサービス名
+#   secretName: my-laravel-db-secret
+#   host: my-mysql-service
 #   port: 3306
 #   name: my_laravel_db
-
-# Example: Non-sensitive app settings (could come from a ConfigMap or be set directly)
 # app:
 #   env: production
 #   debug: false
-#   url: https://nqg1t0.com # ★実際の公開URL
-#   key: "" # APP_KEYはSecretで管理するのが望ましい
+#   url: https://nqg1t0.com
+#   key: "" # Secretで管理
 #   timezone: "Asia/Tokyo"
 #   locale: "ja"
-
 # cache:
-#   driver: redis # or file, database
-#   # If redis:
-#   # redisHost: my-redis-service
-#   # redisPort: 6379
-
+#   driver: redis
 # session:
-#   driver: redis # or file, database
-#   lifetime: 120
-
+#   driver: redis
 # queue:
-#   connection: redis # or database, sync
-
+#   connection: redis
 # --- End of Laravel Application Specific Configuration ---
+
 nodeSelector: {}
 tolerations: []
 affinity: {}
