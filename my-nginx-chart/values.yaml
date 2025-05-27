@@ -6,13 +6,13 @@ replicaCount: 1 # アプリケーションのPodを何個起動するか (CIで�
 
 # PHP-FPMコンテナ用のイメージ設定
 phpFpmImage:
-  repository: ryonagashiro/nqg1t0-laravel-app-fpm # ★あんたのDocker Hubユーザー名とPHP-FPMイメージ名
+  repository: rnagashiro/nqg1t0-laravel-app-fpm # ★あんたのDocker Hubユーザー名とPHP-FPMイメージ名
   pullPolicy: IfNotPresent
   tag: "latest" # ← CIがここを新しいコミットハッシュなどに書き換える
 
 # Nginxコンテナ用のイメージ設定
 nginxImage:
-  repository: ryonagashiro/nqg1t0-nginx-web # ★あんたのDocker Hubユーザー名とNginxイメージ名
+  repository: rnagashiro/nqg1t0-nginx-web # ★あんたのDocker Hubユーザー名とNginxイメージ名
   pullPolicy: IfNotPresent
   tag: "latest" # ← CIがここを新しいコミットハッシュなどに書き換える
 
