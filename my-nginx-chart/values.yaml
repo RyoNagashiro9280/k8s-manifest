@@ -5,12 +5,12 @@ phpFpmImage:
   repository: ${{ env.DOCKERHUB_USERNAME }}/${{ env.PHP_FPM_IMAGE_NAME }} # CIで使うフルパスを書いてもええし、
   # ArgoCD側で上書きするならリポジトリ名だけでもOK
   pullPolicy: IfNotPresent
-  tag: "latest" # ← CIがここを書き換える
+  tag: "6d3349f" # ← CIがここを書き換える
 # Nginxコンテナ用のイメージ設定 (もしNginxもカスタムイメージなら)
 nginxImage:
   repository: ${{ env.DOCKERHUB_USERNAME }}/${{ env.NGINX_IMAGE_NAME }}
   pullPolicy: IfNotPresent
-  tag: "latest" # ← CIがここを書き換える (もしNginxイメージもCIで作るなら)
+  tag: "6d3349f" # ← CIがここを書き換える (もしNginxイメージもCIで作るなら)
 # serviceAccount: ... (省略) ...
 # service: ... (省略) ...
 ingress:
