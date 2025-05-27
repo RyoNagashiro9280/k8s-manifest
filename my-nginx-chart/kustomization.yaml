@@ -15,3 +15,4 @@ images:
     newName: your-dockerhub-username/k8s-learn-web
     # GitHub Actions で書き換えるための初期タグ (または現在のタグ)
     newTag: initial-tag
+# 名前のプレフィックスとサフィックスを設定
