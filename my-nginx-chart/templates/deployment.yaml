@@ -1,16 +1,15 @@
+# k8s-learn-web-chart/templates/deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "my-nginx-chart.fullname" . }}
+  name: {{ include "k8s-learn-web-chart.fullname" . }}
   labels:
-    {{- include "my-nginx-chart.labels" . | nindent 4 }}
+    {{- include "k8s-learn-web-chart.labels" . | nindent 4 }}
 spec:
-  {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
-  {{- end }}
   selector:
     matchLabels:
-      {{- include "my-nginx-chart.selectorLabels" . | nindent 6 }}
+      {{- include "k8s-learn-web-chart.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -18,138 +17,35 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "my-nginx-chart.labels" . | nindent 8 }}
-        {{- with .Values.podLabels }}
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
+        {{- include "k8s-learn-web-chart.selectorLabels" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "my-nginx-chart.serviceAccountName" . }}
-      {{- with .Values.podSecurityContext }}
+      serviceAccountName: {{ include "k8s-learn-web-chart.serviceAccountName" . }}
       securityContext:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      volumes:
-      - name: laravel-public-storage
-        emptyDir: {}
-      - name: laravel-storage-writable
-        emptyDir: {}
-      - name: laravel-bootstrap-cache-writable
-        emptyDir: {}
-      {{- with .Values.volumes }}
-        {{- toYaml . | nindent 6 }}
-      {{- end }}
-      initContainers:
-      - name: laravel-init
-        image: "{{ .Values.phpFpmImage.repository }}:{{ .Values.phpFpmImage.tag | default .Chart.AppVersion }}"
-        imagePullPolicy: {{ .Values.phpFpmImage.pullPolicy }}
-        command: ['sh', '-c']
-        args:
-          - >
-            echo "Initializing Laravel directories and linking storage...";
-            mkdir -p /var/www/html/public && \
-            mkdir -p /var/www/html/storage/framework/{sessions,views,cache} && \
-            mkdir -p /var/www/html/storage/logs && \
-            mkdir -p /var/www/html/bootstrap/cache && \
-            chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache && \
-            chmod -R ug+rwx /var/www/html/storage /var/www/html/bootstrap/cache && \
-            if [ ! -L /var/www/html/public/storage ]; then php artisan storage:link; else echo "Storage already linked."; fi && \
-            echo "Initialization complete.";
-        workingDir: /var/www/html
-        envFrom:
-        - secretRef:
-            name: {{ include "my-nginx-chart.fullname" . }}-laravel-env
-        volumeMounts:
-        - name: laravel-public-storage
-          mountPath: /var/www/html/public
-        - name: laravel-storage-writable
-          mountPath: /var/www/html/storage
-        - name: laravel-bootstrap-cache-writable
-          mountPath: /var/www/html/bootstrap/cache
-        {{- with .Values.phpFpmEnvFrom }}
-        envFrom:
-          {{- toYaml . | nindent 10 }}
-        {{- end }}
-        {{- with .Values.phpFpmEnv }}
-        env:
-          {{- toYaml . | nindent 10 }}
-        {{- end }}
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
-        - name: php-fpm
-          {{- with .Values.phpFpmSecurityContext }}
+        - name: web-app # 元のマニフェストに合わせて 'web-app' に
           securityContext:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          image: "{{ .Values.phpFpmImage.repository }}:{{ .Values.phpFpmImage.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.phpFpmImage.pullPolicy }}
-          ports:
-            - name: fpm
-              containerPort: 9000
-              protocol: TCP
-          {{- with .Values.phpFpmLivenessProbe }}
-          livenessProbe:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          {{- with .Values.phpFpmReadinessProbe }}
-          readinessProbe:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          {{- with .Values.phpFpmResources }}
-          resources:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          volumeMounts:
-          - name: laravel-public-storage
-            mountPath: /var/www/html/public
-          - name: laravel-storage-writable
-            mountPath: /var/www/html/storage
-          - name: laravel-bootstrap-cache-writable
-            mountPath: /var/www/html/bootstrap/cache
-          {{- with .Values.phpFpmVolumeMounts }}
-            {{- toYaml . | nindent 10 }}
-          {{- end }}
-          {{- with .Values.phpFpmEnvFrom }}
-          envFrom:
-            {{- toYaml . | nindent 10 }}
-          {{- end }}
-          {{- with .Values.phpFpmEnv }}
-          env:
-            {{- toYaml . | nindent 10 }}
-          {{- end }}
-
-        - name: nginx
-          {{- with .Values.nginxSecurityContext }}
-          securityContext:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          image: "{{ .Values.nginxImage.repository }}:{{ .Values.nginxImage.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.nginxImage.pullPolicy }}
+            {{- toYaml .Values.podSecurityContext | nindent 12 }} # podSecurityContextを流用 (必要なら専用のを)
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
-              containerPort: 80
+              containerPort: {{ .Values.service.targetPort }}
               protocol: TCP
-          {{- with .Values.nginxLivenessProbe }}
-          livenessProbe:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          {{- with .Values.nginxReadinessProbe }}
-          readinessProbe:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          {{- with .Values.nginxResources }}
+          # livenessProbe: # 必要に応じて追加
+          #   httpGet:
+          #     path: /
+          #     port: http
+          # readinessProbe: # 必要に応じて追加
+          #   httpGet:
+          #     path: /
+          #     port: http
           resources:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          volumeMounts:
-          - name: laravel-public-storage
-            mountPath: /var/www/html/public
-            readOnly: true
-          {{- with .Values.nginxVolumeMounts }}
-            {{- toYaml . | nindent 10 }}
-          {{- end }}
+            {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

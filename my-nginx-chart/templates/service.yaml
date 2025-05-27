@@ -1,15 +1,16 @@
+# k8s-learn-web-chart/templates/service.yaml
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "my-nginx-chart.fullname" . }}
+  name: {{ include "k8s-learn-web-chart.fullname" . }}-svc # 元の名前に合わせて '-svc' を追加
   labels:
-    {{- include "my-nginx-chart.labels" . | nindent 4 }}
+    {{- include "k8s-learn-web-chart.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.service.type }}
   ports:
     - port: {{ .Values.service.port }}
-      targetPort: http
+      targetPort: {{ .Values.service.targetPort }} # 名前 'http' の代わりにポート番号を使用
       protocol: TCP
       name: http
   selector:
-    {{- include "my-nginx-chart.selectorLabels" . | nindent 4 }}
+    {{- include "k8s-learn-web-chart.selectorLabels" . | nindent 4 }}
