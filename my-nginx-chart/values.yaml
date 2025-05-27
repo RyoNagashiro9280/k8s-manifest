@@ -5,18 +5,15 @@ phpFpmImage:
   repository: ${{ env.DOCKERHUB_USERNAME }}/${{ env.PHP_FPM_IMAGE_NAME }} # CIで使うフルパスを書いてもええし、
   # ArgoCD側で上書きするならリポジトリ名だけでもOK
   pullPolicy: IfNotPresent
-  tag: "latest" # ← CIがここを書き換える
-
+  tag: "a33c50a" # ← CIがここを書き換える
 # Nginxコンテナ用のイメージ設定 (もしNginxもカスタムイメージなら)
 nginxImage:
   repository: ${{ env.DOCKERHUB_USERNAME }}/${{ env.NGINX_IMAGE_NAME }}
   pullPolicy: IfNotPresent
-  tag: "latest" # ← CIがここを書き換える (もしNginxイメージもCIで作るなら)
-
+  tag: "a33c50a" # ← CIがここを書き換える (もしNginxイメージもCIで作るなら)
 imagePullSecrets: [] # プライベートリポジトリからイメージをプルする場合に使うSecretの名前
-nameOverride: ""     # チャート名から作られるリソース名を上書きしたい場合
+nameOverride: "" # チャート名から作られるリソース名を上書きしたい場合
 fullnameOverride: "" # 完全にリソース名を指定したい場合 (例: my-laravel-app)
-
 serviceAccount:
   # Specifies whether a service account should be created for the application pods
   create: true
@@ -26,22 +23,20 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template.
   # If create is false, this name is used if set, otherwise 'default' is used.
   name: ""
-
 podAnnotations: {} # Podに共通で付けたいアノテーション
-podLabels: {}      # Podに共通で付けたい追加のラベル
-
+podLabels: {} # Podに共通で付けたい追加のラベル
 podSecurityContext: {}
-  # fsGroup: 2000
+# fsGroup: 2000
 
 # Individual container security contexts
 # phpFpmSecurityContext: {}
 # nginxSecurityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
+# capabilities:
+#   drop:
+#   - ALL
+# readOnlyRootFilesystem: true
+# runAsNonRoot: true
+# runAsUser: 1000
 
 # Service definition for PHP-FPM (if Nginx needs to reach it via a separate service)
 # Or, this could be the main service that Ingress points to if Nginx is a sidecar.
@@ -53,11 +48,9 @@ podSecurityContext: {}
 service:
   # This would be the service for Nginx that the Ingress points to
   type: ClusterIP # Ingressを使うのでClusterIPでOK
-  port: 80        # Serviceが公開するポート (NginxコンテナのHTTPポートに合わせる)
+  port: 80 # Serviceが公開するポート (NginxコンテナのHTTPポートに合わせる)
   # targetPort: http # DeploymentのNginxコンテナのポート名 (例: http) を指定するとより明確
-
 # Ingress settings
-
 ingress:
   enabled: true
   className: "nginx"
@@ -69,28 +62,27 @@ ingress:
         - path: /
           pathType: ImplementationSpecific
   tls:
-   - secretName: my-app-tls-prod # アプリ用のSecret名
-     hosts:
-       - nqg1t0.com # アプリ用のドメイン
-
+    - secretName: my-app-tls-prod # アプリ用のSecret名
+      hosts:
+        - nqg1t0.com # アプリ用のドメイン
 # Resource requests and limits for Pods
 # It's good practice to define these for both PHP-FPM and Nginx containers
 # in your Deployment template, possibly referencing values from here.
 resources: {}
-  # phpFpm:
-  #   limits:
-  #     cpu: 500m
-  #     memory: 512Mi
-  #   requests:
-  #     cpu: 250m
-  #     memory: 256Mi
-  # nginx:
-  #   limits:
-  #     cpu: 200m
-  #     memory: 128Mi
-  #   requests:
-  #     cpu: 100m
-  #     memory: 64Mi
+# phpFpm:
+#   limits:
+#     cpu: 500m
+#     memory: 512Mi
+#   requests:
+#     cpu: 250m
+#     memory: 256Mi
+# nginx:
+#   limits:
+#     cpu: 200m
+#     memory: 128Mi
+#   requests:
+#     cpu: 100m
+#     memory: 64Mi
 
 # Liveness and Readiness probes for containers
 # These should be defined in the Deployment template, potentially configured by values here.
@@ -113,14 +105,12 @@ resources: {}
 #   nginx:
 #     enabled: true
 #     # ...
-
 autoscaling:
   enabled: false # HorizontalPodAutoscaler (HPA) を使うかどうか
   minReplicas: 1
   maxReplicas: 5 # 状況に合わせて調整
   targetCPUUtilizationPercentage: 80
   # targetMemoryUtilizationPercentage: 80
-
 # --- Laravel Application Specific Configuration ---
 # These would typically be passed as environment variables to your PHP-FPM container,
 # often using Kubernetes Secrets for sensitive data and ConfigMaps for non-sensitive data.
@@ -157,10 +147,6 @@ autoscaling:
 #   connection: redis # or database, sync
 
 # --- End of Laravel Application Specific Configuration ---
-
-
 nodeSelector: {}
-
 tolerations: []
-
 affinity: {}
