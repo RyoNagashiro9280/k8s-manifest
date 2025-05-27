@@ -47,3 +47,6 @@ spec:
           {{- end }}
     {{- end }}
 {{- end }}
+# Ensure the Ingress is only created if enabled
+# The Ingress will be created with a name like "nginx-sample-my-nginx-chart-ingress"
+# The service name in the Ingress backend should match the Service created by service.yaml
