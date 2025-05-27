@@ -3,12 +3,11 @@
 # Declare variables to be passed into your templates.
 
 replicaCount: 5
-
 image:
   repository: nginx
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "fca1879"
+  tag: "2868af7"
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
@@ -72,9 +71,9 @@ ingress:
     - secretName: nginx-sample-tls-prod # Secret name for the certificate
       hosts:
         - nqg1t0.com # Hostname for TLS
-  # - secretName: another-example-com-tls
-  #   hosts:
-  #     - another.example.com
+        # - secretName: another-example-com-tls
+        #   hosts:
+        #     - another.example.com
 resources: {} # Resource requests and limits for Pods
 # We usually recommend not to specify default resources and to leave this as a conscious
 # choice for the user. This also increases chances charts run on environments with little
