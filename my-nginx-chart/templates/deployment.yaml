@@ -32,50 +32,121 @@ spec:
       securityContext:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      volumes:
+      - name: laravel-public-storage
+        emptyDir: {}
+      - name: laravel-storage-writable
+        emptyDir: {}
+      - name: laravel-bootstrap-cache-writable
+        emptyDir: {}
+      {{- with .Values.volumes }}
+        {{- toYaml . | nindent 6 }}
+      {{- end }}
+      initContainers:
+      - name: laravel-init
+        image: "{{ .Values.phpFpmImage.repository }}:{{ .Values.phpFpmImage.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.phpFpmImage.pullPolicy }}
+        command: ['sh', '-c']
+        args:
+          - >
+            echo "Initializing Laravel directories and linking storage...";
+            mkdir -p /var/www/html/public && \
+            mkdir -p /var/www/html/storage/framework/{sessions,views,cache} && \
+            mkdir -p /var/www/html/storage/logs && \
+            mkdir -p /var/www/html/bootstrap/cache && \
+            chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache && \
+            chmod -R ug+rwx /var/www/html/storage /var/www/html/bootstrap/cache && \
+            if [ ! -L /var/www/html/public/storage ]; then php artisan storage:link; else echo "Storage already linked."; fi && \
+            echo "Initialization complete.";
+        workingDir: /var/www/html
+        volumeMounts:
+        - name: laravel-public-storage
+          mountPath: /var/www/html/public
+        - name: laravel-storage-writable
+          mountPath: /var/www/html/storage
+        - name: laravel-bootstrap-cache-writable
+          mountPath: /var/www/html/bootstrap/cache
+        {{- with .Values.phpFpmEnvFrom }}
+        envFrom:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.phpFpmEnv }}
+        env:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
       containers:
-        - name: php-fpm 
-          {{- with .Values.phpFpmSecurityContext }} 
+        - name: php-fpm
+          {{- with .Values.phpFpmSecurityContext }}
           securityContext:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          image: "{{ .Values.phpFpmImage.repository }}:{{ .Values.phpFpmImage.tag | default .Chart.AppVersion }}" 
+          image: "{{ .Values.phpFpmImage.repository }}:{{ .Values.phpFpmImage.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.phpFpmImage.pullPolicy }}
           ports:
-            - name: http-fpm 
-              containerPort: 9000 
+            - name: fpm
+              containerPort: 9000
               protocol: TCP
-
-        - name: nginx 
-          {{- with .Values.nginxSecurityContext }} 
-          securityContext:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          image: "{{ .Values.nginxImage.repository }}:{{ .Values.nginxImage.tag | default .Chart.AppVersion }}" 
-          imagePullPolicy: {{ .Values.nginxImage.pullPolicy }}
-          ports:
-            - name: http 
-              containerPort: 80 
-              protocol: TCP
-          {{- with .Values.livenessProbe }}
+          {{- with .Values.phpFpmLivenessProbe }}
           livenessProbe:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- with .Values.readinessProbe }}
+          {{- with .Values.phpFpmReadinessProbe }}
           readinessProbe:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- with .Values.resources }}
+          {{- with .Values.phpFpmResources }}
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- with .Values.volumeMounts }}
           volumeMounts:
+          - name: laravel-public-storage
+            mountPath: /var/www/html/public
+          - name: laravel-storage-writable
+            mountPath: /var/www/html/storage
+          - name: laravel-bootstrap-cache-writable
+            mountPath: /var/www/html/bootstrap/cache
+          {{- with .Values.phpFpmVolumeMounts }}
+            {{- toYaml . | nindent 10 }}
+          {{- end }}
+          {{- with .Values.phpFpmEnvFrom }}
+          envFrom:
+            {{- toYaml . | nindent 10 }}
+          {{- end }}
+          {{- with .Values.phpFpmEnv }}
+          env:
+            {{- toYaml . | nindent 10 }}
+          {{- end }}
+
+        - name: nginx
+          {{- with .Values.nginxSecurityContext }}
+          securityContext:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-      {{- with .Values.volumes }}
-      volumes:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+          image: "{{ .Values.nginxImage.repository }}:{{ .Values.nginxImage.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.nginxImage.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          {{- with .Values.nginxLivenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.nginxReadinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.nginxResources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+          - name: laravel-public-storage
+            mountPath: /var/www/html/public
+            readOnly: true
+          {{- with .Values.nginxVolumeMounts }}
+            {{- toYaml . | nindent 10 }}
+          {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
