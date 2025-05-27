@@ -3,7 +3,7 @@
 # PHP-FPMコンテナ用のイメージ設定
 phpFpmImage:
   repository: ${{ env.DOCKERHUB_USERNAME }}/${{ env.PHP_FPM_IMAGE_NAME }} # CIで使うフルパスを書いてもええし、
-                                                                   # ArgoCD側で上書きするならリポジトリ名だけでもOK
+  # ArgoCD側で上書きするならリポジトリ名だけでもOK
   pullPolicy: IfNotPresent
   tag: "latest" # ← CIがここを書き換える
 
