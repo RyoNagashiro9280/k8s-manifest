@@ -1,0 +1,12 @@
+# k8s-learn-web-chart/Chart.yaml
+apiVersion: v2
+name: nextjs-app
+description: A Helm chart for the k8s-learn-web application
+
+type: application
+
+# チャートのバージョン (変更ごとにインクリメント)
+version: 0.1.0
+
+# アプリケーションのバージョン
+appVersion: "1.0.0"

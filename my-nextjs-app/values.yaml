@@ -1,0 +1,43 @@
+# k8s-learn-web-chart/values.yaml
+
+replicaCount: 2 # ★ Podの数
+
+image:
+  repository: rnagashiro/my-nextjs-app # ★ Docker Hubのユーザー名/イメージ名 (Secretから取るのが望ましい)
+  pullPolicy: IfNotPresent
+  tag: "initial-tag" # ★ CIがここを書き換える (例: github.sha)
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podSecurityContext: {}
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 3000 # ★ コンテナのポート (Deploymentと合わせる)
+
+resources: # ★ リソース要求/制限
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
