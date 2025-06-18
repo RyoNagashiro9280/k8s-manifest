@@ -8,11 +8,10 @@ resources:
 - deployment.yaml
 
 # Kustomize が更新するイメージ情報を定義する
-images:
   # 'kustomize edit set image' で参照する名前 (通常は元のイメージ名)
-  - name: rnagashiro/k8s-learn-web
     # 新しいイメージ名 (同じでOK)
-    newName: rnagashiro/k8s-learn-web
     # GitHub Actions で書き換えるための初期タグ (または現在のタグ)
-    newTag: initial-tag
-# 名前のプレフィックスとサフィックスを設定
+images:
+- name: rnagashiro/k8s-learn-web
+  newName: rnagashiro/k8s-learn-web
+  newTag: 950d52011ee8b9a69b7a9d4642f191dbd85e5f55
