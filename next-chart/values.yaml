@@ -15,11 +15,11 @@ ingress:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod # 本番用
   hosts:
-    - host: test.nqg1t0.com # ★アプリ用の新しいドメイン名
+    - host: infopia.nqg1t0.com # ★アプリ用の新しいドメイン名
       paths:
         - path: /
           pathType: Prefix
   tls:
    - secretName: my-nextjs-app-tls # ★証明書のSecret名
      hosts:
-       - test.nqg1t0.com
+       - infopia.nqg1t0.com
