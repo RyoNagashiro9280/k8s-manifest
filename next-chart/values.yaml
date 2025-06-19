@@ -2,7 +2,7 @@ replicaCount: 1
 image:
   repository: rnagashiro/my-nextjs-app # ★あんたのDocker Hubユーザー名/イメージ名
   pullPolicy: IfNotPresent
-  tag: "6427e8d" # ← CIがここを書き換える
+  tag: "c4a2752" # ← CIがここを書き換える
 service:
   type: ClusterIP
   port: 3000 # Next.jsアプリがリッスンするポート
@@ -17,6 +17,6 @@ ingress:
         - path: /
           pathType: Prefix
   tls:
-   - secretName: my-nextjs-app-tls # ★証明書のSecret名
-     hosts:
-       - infopia.nqg1t0.com
+    - secretName: my-nextjs-app-tls # ★証明書のSecret名
+      hosts:
+        - infopia.nqg1t0.com
