@@ -2,7 +2,7 @@ replicaCount: 1
 image:
   repository: rnagashiro/my-nextjs-app # ★あんたのDocker Hubユーザー名/イメージ名
   pullPolicy: IfNotPresent
-  tag: "66dfd95" # ← CIがここを書き換える
+  tag: "bd57076" # ← CIがここを書き換える
 service:
   type: ClusterIP
   port: 3000 # Next.jsアプリがリッスンするポート
