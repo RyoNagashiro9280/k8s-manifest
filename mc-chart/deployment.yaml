@@ -44,7 +44,7 @@ spec:
     port: 2222
     targetPort: 22
 ---
-# ===== 4. Deployment (公開鍵のマウントパスを修正) =====
+# ===== 4. Deployment (securityContextを追加してファイル権限を修正) =====
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -60,11 +60,13 @@ spec:
       labels:
         app: minecraft-server
     spec:
+      # 修正点：securityContextを追加して、マウントされたファイルのグループ権限をroot(0)に設定します
+      securityContext:
+        fsGroup: 0
       volumes:
         - name: minecraft-data
           persistentVolumeClaim:
             claimName: minecraft-server-data-pvc
-        # SSH公開鍵をボリュームとして定義
         - name: sftp-public-key-vol
           secret:
             secretName: sftp-user-public-key
@@ -83,7 +85,7 @@ spec:
               subPath: plugins
             # ... 他のマウントも変更なし ...
 
-        # ===== SFTPサイドカーコンテナ (認証方法を変更) =====
+        # ===== SFTPサイドカーコンテナ (変更なし) =====
         - name: sftp-server
           image: atmoz/sftp:latest
           ports:
@@ -91,11 +93,9 @@ spec:
           volumeMounts:
             - name: minecraft-data
               mountPath: /home/mc/data
-            # 修正点：公開鍵を標準的なパスにマウントします
             - name: sftp-public-key-vol
               mountPath: /home/mc/.ssh/authorized_keys
               subPath: authorized_keys
               readOnly: true
-          # パスワード認証を無効化し、公開鍵認証のみにする
           args:
             - "mc::0:0:::data"
