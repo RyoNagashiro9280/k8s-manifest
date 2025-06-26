@@ -23,9 +23,29 @@ spec:
           image: rnagashiro/minecraft-server:latest # CI/CDで更新されるイメージ
           ports:
             - containerPort: 25565
+          # 修正点：subPathを使って必要なデータだけを永続化します
           volumeMounts:
             - name: minecraft-data
-              mountPath: /server
+              mountPath: /server/world
+              subPath: world
+            - name: minecraft-data
+              mountPath: /server/plugins
+              subPath: plugins
+            - name: minecraft-data
+              mountPath: /server/logs
+              subPath: logs
+            - name: minecraft-data
+              mountPath: /server/server.properties
+              subPath: server.properties
+            - name: minecraft-data
+              mountPath: /server/spigot.yml
+              subPath: spigot.yml
+            - name: minecraft-data
+              mountPath: /server/ops.json
+              subPath: ops.json
+            - name: minecraft-data
+              mountPath: /server/banned-players.json
+              subPath: banned-players.json
 
         # ===== ここからが新しく追加するSFTPサイドカーコンテナ =====
         - name: sftp-server
@@ -35,8 +55,7 @@ spec:
           volumeMounts:
             - name: minecraft-data # Minecraftコンテナと共有するボリューム
               mountPath: /home/mc/data # ユーザーのホームディレクトリにマウント
+          # 修正点：argsを削除し、envFromのみでSecretを読み込みます
           envFrom:
             - secretRef:
                 name: sftp-user-credentials # 手順1で作成したSecretを環境変数として読み込む
-          args:
-            - ${SFTP_USER}:${SFTP_PASSWORD}:1001 # 読み込んだ環境変数を使ってユーザーを作成
