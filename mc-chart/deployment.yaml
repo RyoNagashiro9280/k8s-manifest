@@ -14,7 +14,7 @@ spec:
     requests:
       storage: 10Gi
 ---
-# ===== 2. Minecraftサーバー用のService (変更なし) =====
+# ===== 2. Minecraftサーバー用のService (統合版ポートを追加) =====
 apiVersion: v1
 kind: Service
 metadata:
@@ -25,10 +25,15 @@ spec:
   selector:
     app: minecraft-server
   ports:
-  - name: minecraft
+  - name: minecraft-java
     protocol: TCP
     port: 25565
     targetPort: 25565
+  # 修正点：統合版(Bedrock)用のポートを追加します
+  - name: minecraft-bedrock
+    protocol: UDP
+    port: 19132
+    targetPort: 19132
 ---
 # ===== 3. SFTPサーバー用のService (変更なし) =====
 apiVersion: v1
@@ -46,7 +51,7 @@ spec:
     port: 2222
     targetPort: 2222
 ---
-# ===== 4. Deployment (マウントパスを統一して問題を修正) =====
+# ===== 4. Deployment (Minecraftコンテナにポートを追加) =====
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -66,29 +71,30 @@ spec:
         - name: minecraft-data
           persistentVolumeClaim:
             claimName: minecraft-server-data-pvc
-
       initContainers:
       - name: init-minecraft-data
         image: rnagashiro/minecraft-server:latest # Minecraftサーバーと同じイメージを使用
-        # ボリュームが空の場合にのみ、イメージ内のサーバーファイルをボリュームにコピーするコマンド
         command: ['sh', '-c', 'if [ ! -f /data/server.jar ]; then echo "Copying server files to new volume..."; cp -r /server/. /data/; else echo "Volume already has server files."; fi']
         volumeMounts:
         - name: minecraft-data
           mountPath: /data # ボリュームを/dataにマウントして中身を確認・コピー
-
       containers:
-        # ===== Minecraftコンテナ (マウントパスとWORKDIRを修正) =====
+        # ===== Minecraftコンテナ (ポートを追加) =====
         - name: minecraft
           image: rnagashiro/minecraft-server:latest
           stdin: true
           tty: true
           ports:
-            - containerPort: 25565
-          # 修正点：マウントパスを/dataに統一します
+            - name: java-tcp
+              containerPort: 25565
+              protocol: TCP
+            # 修正点：統合版(Bedrock)用のポートを追加します
+            - name: bedrock-udp
+              containerPort: 19132
+              protocol: UDP
           volumeMounts:
             - name: minecraft-data
               mountPath: /data
-          # 修正点：作業ディレクトリをマウントパスに合わせます
           workingDir: /data
 
         # ===== SFTPサイドカーコンテナ (変更なし) =====
