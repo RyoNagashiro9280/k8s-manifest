@@ -46,7 +46,7 @@ spec:
     port: 2222
     targetPort: 2222
 ---
-# ===== 4. Deployment (Init Containerを追加し、マウント方法を簡素化) =====
+# ===== 4. Deployment (マウントパスを統一して問題を修正) =====
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -67,7 +67,6 @@ spec:
           persistentVolumeClaim:
             claimName: minecraft-server-data-pvc
 
-      # 修正点：Init Containerを追加して、永続ボリュームの初期化を行います
       initContainers:
       - name: init-minecraft-data
         image: rnagashiro/minecraft-server:latest # Minecraftサーバーと同じイメージを使用
@@ -78,19 +77,21 @@ spec:
           mountPath: /data # ボリュームを/dataにマウントして中身を確認・コピー
 
       containers:
-        # ===== Minecraftコンテナ (マウント方法を簡素化) =====
+        # ===== Minecraftコンテナ (マウントパスとWORKDIRを修正) =====
         - name: minecraft
           image: rnagashiro/minecraft-server:latest
           stdin: true
           tty: true
           ports:
             - containerPort: 25565
-          # 修正点：subPathを使わず、ディレクトリ全体をマウントします
+          # 修正点：マウントパスを/dataに統一します
           volumeMounts:
             - name: minecraft-data
-              mountPath: /server
+              mountPath: /data
+          # 修正点：作業ディレクトリをマウントパスに合わせます
+          workingDir: /data
 
-        # ===== SFTPサイドカーコンテナ (マウント方法を簡素化) =====
+        # ===== SFTPサイドカーコンテナ (変更なし) =====
         - name: sftp-server
           image: lscr.io/linuxserver/openssh-server:latest
           ports:
@@ -109,7 +110,6 @@ spec:
                 secretKeyRef:
                   name: sftp-user-pubkey-secret
                   key: PUBLIC_KEY
-          # 修正点：subPathを使わず、ディレクトリ全体をマウントします
           volumeMounts:
             - name: minecraft-data
               mountPath: /data
