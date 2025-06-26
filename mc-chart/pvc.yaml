@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: minecraft-data-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce # 1つのノードから読み書き可能
+  resources:
+    requests:
+      storage: 10Gi # 10GBのストレージを要求（環境に合わせて変更）

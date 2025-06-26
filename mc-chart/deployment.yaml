@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minecraft-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minecraft-server
+  template:
+    metadata:
+      labels:
+        app: minecraft-server
+    spec:
+      containers:
+      - name: minecraft
+        # ここにDocker Hubのイメージを指定。最初はlatestでOK
+        image: rnagashiro/minecraft-server:latest 
+        ports:
+        - containerPort: 25565
+        volumeMounts: # PVCをコンテナ内のディレクトリにマウント
+        - name: minecraft-data
+          mountPath: /server/world # ワールドデータをマウント
+        # プラグインなど、他のディレクトリも同様に追加可能
+        # - name: minecraft-data
+        #   mountPath: /server/plugins
+        #   subPath: plugins # PVC内のサブパスを指定
+      volumes: # 使用するPVCを定義
+      - name: minecraft-data
+        persistentVolumeClaim:
+          claimName: minecraft-data-pvc
