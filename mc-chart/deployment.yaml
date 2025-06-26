@@ -1,3 +1,49 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: minecraft-server-data-pvc
+  namespace: mc-server
+spec:
+  storageClassName: local-path
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+# ===== 2. Minecraftサーバー用のService =====
+apiVersion: v1
+kind: Service
+metadata:
+  name: minecraft-server-service
+  namespace: mc-server
+spec:
+  type: LoadBalancer
+  selector:
+    app: minecraft-server
+  ports:
+  - name: minecraft
+    protocol: TCP
+    port: 25565
+    targetPort: 25565
+---
+# ===== 3. SFTPサーバー用のService (新しい外部IPが割り当てられます) =====
+apiVersion: v1
+kind: Service
+metadata:
+  name: minecraft-sftp-service
+  namespace: mc-server
+spec:
+  type: LoadBalancer
+  selector:
+    app: minecraft-server
+  ports:
+  - name: sftp
+    protocol: TCP
+    port: 2222
+    targetPort: 22
+---
+# ===== 4. Deployment (認証方法をSSH鍵認証に変更) =====
 apiVersion: apps/v1
 kind: Deployment
 metadata:
