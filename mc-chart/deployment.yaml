@@ -44,7 +44,7 @@ spec:
     port: 2222
     targetPort: 22
 ---
-# ===== 4. Deployment (認証方法を環境変数に変更) =====
+# ===== 4. Deployment (SFTPのユーザー作成方法を修正) =====
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -60,12 +60,10 @@ spec:
       labels:
         app: minecraft-server
     spec:
-      # securityContextは不要になったため削除
       volumes:
         - name: minecraft-data
           persistentVolumeClaim:
             claimName: minecraft-server-data-pvc
-        # 公開鍵のボリュームは不要になったため削除
       containers:
         # ===== Minecraftコンテナ (変更なし) =====
         - name: minecraft
@@ -81,7 +79,7 @@ spec:
               subPath: plugins
             # ... 他のマウントも変更なし ...
 
-        # ===== SFTPサイドカーコンテナ (認証方法を大幅に変更) =====
+        # ===== SFTPサイドカーコンテナ (認証方法を修正) =====
         - name: sftp-server
           image: atmoz/sftp:latest
           ports:
@@ -89,11 +87,8 @@ spec:
           volumeMounts:
             - name: minecraft-data
               mountPath: /home/mc/data
-            # 公開鍵のボリュームマウントは不要になったため削除
           envFrom:
             # Secretから環境変数として公開鍵を読み込む
             - secretRef:
                 name: sftp-user-config
-          args:
-            # ユーザーを作成するだけのシンプルな引数
-            - "mc::0:0"
+          # 修正点：argsを削除。環境変数からユーザーが自動作成されるようにします。
