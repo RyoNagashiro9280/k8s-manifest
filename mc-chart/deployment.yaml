@@ -91,6 +91,6 @@ spec:
             # Secretから環境変数として公開鍵を読み込む
             - secretRef:
                 name: sftp-user-config
-          # 修正点：argsを再度追加し、ユーザー作成を明確に指示します
+          # 修正点：argsを修正し、ホームディレクトリを明示的に指定します
           args:
-            - "mc::0:0"
+            - "mc::0:0:/home/mc"
