@@ -13,20 +13,30 @@ spec:
       labels:
         app: minecraft-server
     spec:
-      containers:
-        - name: minecraft
-          # ここにDocker Hubのイメージを指定。
-          image: rnagashiro/minecraft-server:5993fc6
-          ports:
-            - containerPort: 25565
-          volumeMounts: # PVCをコンテナ内のディレクトリにマウント
-            - name: minecraft-data
-              mountPath: /server/world # ワールドデータをマウント
-              # プラグインなど、他のディレクトリも同様に追加可能
-              # - name: minecraft-data
-              #   mountPath: /server/plugins
-              #   subPath: plugins # PVC内のサブパスを指定
-      volumes: # 使用するPVCを定義
-        - name: minecraft-data
+      volumes: # まずvolumesセクションをここに移動・定義します
+        - name: minecraft-data # このボリュームを両方のコンテナで共有します
           persistentVolumeClaim:
             claimName: minecraft-server-data-pvc
+      containers:
+        # ===== 既存のMinecraftサーバーコンテナ =====
+        - name: minecraft
+          image: rnagashiro/minecraft-server:latest # CI/CDで更新されるイメージ
+          ports:
+            - containerPort: 25565
+          volumeMounts:
+            - name: minecraft-data
+              mountPath: /server
+
+        # ===== ここからが新しく追加するSFTPサイドカーコンテナ =====
+        - name: sftp-server
+          image: atmoz/sftp:latest # 定番のSFTPサーバーイメージ
+          ports:
+            - containerPort: 22 # SFTPのポート
+          volumeMounts:
+            - name: minecraft-data # Minecraftコンテナと共有するボリューム
+              mountPath: /home/mc/data # ユーザーのホームディレクトリにマウント
+          envFrom:
+            - secretRef:
+                name: sftp-user-credentials # 手順1で作成したSecretを環境変数として読み込む
+          args:
+            - ${SFTP_USER}:${SFTP_PASSWORD}:1001 # 読み込んだ環境変数を使ってユーザーを作成

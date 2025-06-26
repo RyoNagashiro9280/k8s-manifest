@@ -1,14 +1,15 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: minecraft-server-service
+  name: minecraft-sftp-service
   namespace: mc-server
 spec:
-  type: LoadBalancer # クラウド環境ならこれが一番簡単。外部IPが自動で割り当てられます。
-  # もしLoadBalancerが使えない環境（k3sなど）なら type: NodePort を使う
+  type: NodePort # NodePortタイプで外部にポートを公開します
   selector:
-    app: minecraft-server # このラベルを持つPodにトラフィックを流す
+    app: minecraft-server # 同じPodを選択します
   ports:
-  - protocol: TCP
-    port: 25565
-    targetPort: 25565
+    - name: sftp
+      protocol: TCP
+      port: 2222 # クラスタ内でのポート
+      targetPort: 22 # コンテナのSFTPポート(22)に転送
+      # NodePortを指定しない場合、30000-32767の範囲で自動的に割り当てられます
