@@ -1,10 +1,16 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: minecraft-data-pvc
+  # PVCの名前 (Deploymentで指定している名前と合わせる必要があります)
+  name: minecraft-server-data-pvc
 spec:
+  # どの種類のストレージを使うかを指定します。
+  # 以前インストールしたlocal-path-provisionerを使うための設定です。
+  storageClassName: local-path
   accessModes:
-    - ReadWriteOnce # 1つのノードから読み書き可能
+    # 1つのノードから読み書き可能モード
+    - ReadWriteOnce
   resources:
     requests:
-      storage: 10Gi # 10GBのストレージを要求（環境に合わせて変更）
+      # 必要なストレージ容量を指定
+      storage: 10Gi
