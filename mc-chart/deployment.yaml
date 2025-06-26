@@ -23,7 +23,6 @@ spec:
           image: rnagashiro/minecraft-server:latest # CI/CDで更新されるイメージ
           ports:
             - containerPort: 25565
-          # 修正点：subPathを使って必要なデータだけを永続化します
           volumeMounts:
             - name: minecraft-data
               mountPath: /server/world
@@ -58,6 +57,5 @@ spec:
           envFrom:
             - secretRef:
                 name: sftp-user-credentials # 手順1で作成したSecretを環境変数として読み込む
-          # 修正点: argsを追加し、$(VAR)構文で環境変数を起動引数に渡します
           args:
             - $(SFTP_USER):$(SFTP_PASSWORD):0:0:::data

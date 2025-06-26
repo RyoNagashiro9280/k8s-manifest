@@ -1,15 +1,20 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: minecraft-sftp-service
+  name: minecraft-server-service
   namespace: mc-server
 spec:
-  type: NodePort # NodePortタイプで外部にポートを公開します
+  type: LoadBalancer # このタイプは変更なし
   selector:
-    app: minecraft-server # 同じPodを選択します
+    app: minecraft-server
   ports:
-    - name: sftp
-      protocol: TCP
-      port: 2222 # クラスタ内でのポート
-      targetPort: 22 # コンテナのSFTPポート(22)に転送
-      # NodePortを指定しない場合、30000-32767の範囲で自動的に割り当てられます
+  # ===== 既存のMinecraft用ポート設定 =====
+  - name: minecraft
+    protocol: TCP
+    port: 25565
+    targetPort: 25565
+  # ===== ここからが新しく追加するSFTP用ポート設定 =====
+  - name: sftp
+    protocol: TCP
+    port: 2222 # 外部からアクセスするポート番号
+    targetPort: 22  # SFTPコンテナのポート番号
