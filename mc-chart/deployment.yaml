@@ -1,3 +1,5 @@
+# all-in-one.yaml
+
 # ===== 1. PersistentVolumeClaim (変更なし) =====
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -28,7 +30,7 @@ spec:
     port: 25565
     targetPort: 25565
 ---
-# ===== 3. SFTPサーバー用のService (変更なし) =====
+# ===== 3. SFTPサーバー用のService (targetPortを修正) =====
 apiVersion: v1
 kind: Service
 metadata:
@@ -42,9 +44,9 @@ spec:
   - name: sftp
     protocol: TCP
     port: 2222
-    targetPort: 22
+    targetPort: 2222 # 新しいSFTPサーバーのポート番号に合わせます
 ---
-# ===== 4. Deployment (SFTPのユーザー作成方法を修正) =====
+# ===== 4. Deployment (SFTPサーバーの定義を完全に変更) =====
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -64,6 +66,9 @@ spec:
         - name: minecraft-data
           persistentVolumeClaim:
             claimName: minecraft-server-data-pvc
+        - name: sftp-public-key-vol
+          secret:
+            secretName: sftp-user-public-key
       containers:
         # ===== Minecraftコンテナ (変更なし) =====
         - name: minecraft
@@ -79,18 +84,24 @@ spec:
               subPath: plugins
             # ... 他のマウントも変更なし ...
 
-        # ===== SFTPサイドカーコンテナ (認証方法を修正) =====
+        # ===== SFTPサイドカーコンテナ (新しいイメージに変更) =====
         - name: sftp-server
-          image: atmoz/sftp:latest
+          image: lscr.io/linuxserver/openssh-server:latest # 新しいサーバーイメージ
           ports:
-            - containerPort: 22
+            - containerPort: 2222 # このイメージは2222番ポートを使います
+          env:
+            - name: PUID
+              value: "0" # 管理者権限(root)で実行
+            - name: PGID
+              value: "0" # 管理者権限(root)で実行
+            - name: USER_NAME
+              value: "mc" # ログインするユーザー名
+            - name: SUDO_ACCESS
+              value: "true" # ユーザーにsudo権限を許可
           volumeMounts:
             - name: minecraft-data
-              mountPath: /home/mc/data
-          envFrom:
-            # Secretから環境変数として公開鍵を読み込む
-            - secretRef:
-                name: sftp-user-config
-          # 修正点：argsを修正し、ホームディレクトリを明示的に指定します
-          args:
-            - "mc::0:0:/home/mc"
+              mountPath: /data # データボリュームを/dataにマウント
+            # 公開鍵を/config/keys/<ユーザー名>としてマウントします
+            - name: sftp-public-key-vol
+              mountPath: /config/keys/mc
+              subPath: authorized_keys
