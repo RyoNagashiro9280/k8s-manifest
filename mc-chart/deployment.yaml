@@ -13,14 +13,18 @@ spec:
       labels:
         app: minecraft-server
     spec:
-      volumes: # まずvolumesセクションをここに移動・定義します
-        - name: minecraft-data # このボリュームを両方のコンテナで共有します
+      volumes:
+        - name: minecraft-data
           persistentVolumeClaim:
             claimName: minecraft-server-data-pvc
+        # SSH公開鍵をボリュームとして定義
+        - name: sftp-public-key-vol
+          secret:
+            secretName: sftp-user-public-key
       containers:
-        # ===== 既存のMinecraftサーバーコンテナ =====
+        # ===== Minecraftコンテナ (変更なし) =====
         - name: minecraft
-          image: rnagashiro/minecraft-server:latest # CI/CDで更新されるイメージ
+          image: rnagashiro/minecraft-server:latest
           ports:
             - containerPort: 25565
           volumeMounts:
@@ -30,42 +34,21 @@ spec:
             - name: minecraft-data
               mountPath: /server/plugins
               subPath: plugins
-            - name: minecraft-data
-              mountPath: /server/logs
-              subPath: logs
-            - name: minecraft-data
-              mountPath: /server/server.properties
-              subPath: server.properties
-            - name: minecraft-data
-              mountPath: /server/spigot.yml
-              subPath: spigot.yml
-            - name: minecraft-data
-              mountPath: /server/ops.json
-              subPath: ops.json
-            - name: minecraft-data
-              mountPath: /server/banned-players.json
-              subPath: banned-players.json
+            # ... 他のマウントも変更なし ...
 
-        # ===== ここからが新しく追加するSFTPサイドカーコンテナ =====
+        # ===== SFTPサイドカーコンテナ (認証方法を変更) =====
         - name: sftp-server
-          image: atmoz/sftp:latest # 定番のSFTPサーバーイメージ
+          image: atmoz/sftp:latest
           ports:
-            - containerPort: 22 # SFTPのポート
+            - containerPort: 22
           volumeMounts:
-            - name: minecraft-data # Minecraftコンテナと共有するボリューム
-              mountPath: /home/mc/data # ユーザーのホームディレクトリにマウント
-          # 修正点: envFromをenvに変更し、より確実にSecretの値を読み込みます
-          env:
-            - name: SFTP_USER
-              valueFrom:
-                secretKeyRef:
-                  name: sftp-user-credentials
-                  key: SFTP_USER
-            - name: SFTP_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: sftp-user-credentials
-                  key: SFTP_PASSWORD
+            - name: minecraft-data
+              mountPath: /home/mc/data
+            # 公開鍵をauthorized_keysとしてマウント
+            - name: sftp-public-key-vol
+              mountPath: /etc/ssh/mc/authorized_keys
+              subPath: authorized_keys
+              readOnly: true
+          # パスワード認証を無効化し、公開鍵認証のみにする
           args:
-            - $(SFTP_USER):$(SFTP_PASSWORD):0:0:::data
-
+            - "mc::0:0:::data"
