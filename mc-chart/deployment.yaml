@@ -16,7 +16,7 @@ spec:
       containers:
         - name: minecraft
           # ここにDocker Hubのイメージを指定。
-          image: rnagashiro/minecraft-server:5993fc6
+          image: rnagashiro/minecraft-server:758cf40
           ports:
             - containerPort: 25565
           volumeMounts: # PVCをコンテナ内のディレクトリにマウント
