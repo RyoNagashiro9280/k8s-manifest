@@ -3,6 +3,8 @@ kind: PersistentVolumeClaim
 metadata:
   # PVCの名前 (Deploymentで指定している名前と合わせる必要があります)
   name: minecraft-server-data-pvc
+  # namespaceを指定
+  namespace: mc-server
 spec:
   # どの種類のストレージを使うかを指定します。
   # 以前インストールしたlocal-path-provisionerを使うための設定です。
