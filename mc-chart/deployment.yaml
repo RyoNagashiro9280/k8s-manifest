@@ -44,7 +44,7 @@ spec:
     port: 2222
     targetPort: 22
 ---
-# ===== 4. Deployment (securityContextを追加してファイル権限を修正) =====
+# ===== 4. Deployment (認証方法を環境変数に変更) =====
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -60,16 +60,12 @@ spec:
       labels:
         app: minecraft-server
     spec:
-      # 修正点：securityContextを追加して、マウントされたファイルのグループ権限をroot(0)に設定します
-      securityContext:
-        fsGroup: 0
+      # securityContextは不要になったため削除
       volumes:
         - name: minecraft-data
           persistentVolumeClaim:
             claimName: minecraft-server-data-pvc
-        - name: sftp-public-key-vol
-          secret:
-            secretName: sftp-user-public-key
+        # 公開鍵のボリュームは不要になったため削除
       containers:
         # ===== Minecraftコンテナ (変更なし) =====
         - name: minecraft
@@ -85,7 +81,7 @@ spec:
               subPath: plugins
             # ... 他のマウントも変更なし ...
 
-        # ===== SFTPサイドカーコンテナ (変更なし) =====
+        # ===== SFTPサイドカーコンテナ (認証方法を大幅に変更) =====
         - name: sftp-server
           image: atmoz/sftp:latest
           ports:
@@ -93,9 +89,11 @@ spec:
           volumeMounts:
             - name: minecraft-data
               mountPath: /home/mc/data
-            - name: sftp-public-key-vol
-              mountPath: /home/mc/.ssh/authorized_keys
-              subPath: authorized_keys
-              readOnly: true
+            # 公開鍵のボリュームマウントは不要になったため削除
+          envFrom:
+            # Secretから環境変数として公開鍵を読み込む
+            - secretRef:
+                name: sftp-user-config
           args:
-            - "mc::0:0:::data"
+            # ユーザーを作成するだけのシンプルな引数
+            - "mc::0:0"
