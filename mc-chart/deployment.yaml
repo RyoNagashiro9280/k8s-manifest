@@ -34,6 +34,11 @@ spec:
     protocol: UDP
     port: 19132
     targetPort: 19132
+  # dynmap用のポートを追加
+  - name: dynmap
+    protocol: TCP
+    port: 8123
+    targetPort: 8123
 ---
 # ===== 3. SFTPサーバー用のService (変更なし) =====
 apiVersion: v1
@@ -92,6 +97,10 @@ spec:
             - name: bedrock-udp
               containerPort: 19132
               protocol: UDP
+            # dynmap用のポートを追加
+            - name: dynmap-udp
+              containerPort: 8123
+              protocol: TCP
           volumeMounts:
             - name: minecraft-data
               mountPath: /data
