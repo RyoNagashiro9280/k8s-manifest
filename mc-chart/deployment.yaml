@@ -46,7 +46,7 @@ spec:
     port: 2222
     targetPort: 2222
 ---
-# ===== 4. Deployment (SFTPの認証方法を環境変数に変更) =====
+# ===== 4. Deployment (Init Containerを追加し、マウント方法を簡素化) =====
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -66,22 +66,31 @@ spec:
         - name: minecraft-data
           persistentVolumeClaim:
             claimName: minecraft-server-data-pvc
+
+      # 修正点：Init Containerを追加して、永続ボリュームの初期化を行います
+      initContainers:
+      - name: init-minecraft-data
+        image: rnagashiro/minecraft-server:latest # Minecraftサーバーと同じイメージを使用
+        # ボリュームが空の場合にのみ、イメージ内のサーバーファイルをボリュームにコピーするコマンド
+        command: ['sh', '-c', 'if [ ! -f /data/server.jar ]; then echo "Copying server files to new volume..."; cp -r /server/. /data/; else echo "Volume already has server files."; fi']
+        volumeMounts:
+        - name: minecraft-data
+          mountPath: /data # ボリュームを/dataにマウントして中身を確認・コピー
+
       containers:
-        # ===== Minecraftコンテナ (変更なし) =====
+        # ===== Minecraftコンテナ (マウント方法を簡素化) =====
         - name: minecraft
           image: rnagashiro/minecraft-server:latest
+          stdin: true
+          tty: true
           ports:
             - containerPort: 25565
+          # 修正点：subPathを使わず、ディレクトリ全体をマウントします
           volumeMounts:
             - name: minecraft-data
-              mountPath: /server/world
-              subPath: world
-            - name: minecraft-data
-              mountPath: /server/plugins
-              subPath: plugins
-            # ... 他のマウントも変更なし ...
+              mountPath: /server
 
-        # ===== SFTPサイドカーコンテナ (環境変数で鍵を設定) =====
+        # ===== SFTPサイドカーコンテナ (マウント方法を簡素化) =====
         - name: sftp-server
           image: lscr.io/linuxserver/openssh-server:latest
           ports:
@@ -95,12 +104,12 @@ spec:
               value: "mc"
             - name: SUDO_ACCESS
               value: "true"
-            # 修正点：Secretから公開鍵を環境変数として読み込む
             - name: PUBLIC_KEY
               valueFrom:
                 secretKeyRef:
                   name: sftp-user-pubkey-secret
                   key: PUBLIC_KEY
+          # 修正点：subPathを使わず、ディレクトリ全体をマウントします
           volumeMounts:
             - name: minecraft-data
               mountPath: /data
