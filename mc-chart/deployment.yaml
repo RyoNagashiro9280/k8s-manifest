@@ -1,3 +1,4 @@
+# ===== 1. PersistentVolumeClaim (変更なし) =====
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -11,7 +12,7 @@ spec:
     requests:
       storage: 10Gi
 ---
-# ===== 2. Minecraftサーバー用のService =====
+# ===== 2. Minecraftサーバー用のService (変更なし) =====
 apiVersion: v1
 kind: Service
 metadata:
@@ -27,7 +28,7 @@ spec:
     port: 25565
     targetPort: 25565
 ---
-# ===== 3. SFTPサーバー用のService (新しい外部IPが割り当てられます) =====
+# ===== 3. SFTPサーバー用のService (変更なし) =====
 apiVersion: v1
 kind: Service
 metadata:
@@ -43,7 +44,7 @@ spec:
     port: 2222
     targetPort: 22
 ---
-# ===== 4. Deployment (認証方法をSSH鍵認証に変更) =====
+# ===== 4. Deployment (公開鍵のマウントパスを修正) =====
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -90,9 +91,9 @@ spec:
           volumeMounts:
             - name: minecraft-data
               mountPath: /home/mc/data
-            # 公開鍵をauthorized_keysとしてマウント
+            # 修正点：公開鍵を標準的なパスにマウントします
             - name: sftp-public-key-vol
-              mountPath: /etc/ssh/mc/authorized_keys
+              mountPath: /home/mc/.ssh/authorized_keys
               subPath: authorized_keys
               readOnly: true
           # パスワード認証を無効化し、公開鍵認証のみにする
