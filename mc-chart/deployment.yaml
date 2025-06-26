@@ -54,8 +54,18 @@ spec:
           volumeMounts:
             - name: minecraft-data # Minecraftコンテナと共有するボリューム
               mountPath: /home/mc/data # ユーザーのホームディレクトリにマウント
-          envFrom:
-            - secretRef:
-                name: sftp-user-credentials # 手順1で作成したSecretを環境変数として読み込む
+          # 修正点: envFromをenvに変更し、より確実にSecretの値を読み込みます
+          env:
+            - name: SFTP_USER
+              valueFrom:
+                secretKeyRef:
+                  name: sftp-user-credentials
+                  key: SFTP_USER
+            - name: SFTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sftp-user-credentials
+                  key: SFTP_PASSWORD
           args:
             - $(SFTP_USER):$(SFTP_PASSWORD):0:0:::data
+
