@@ -91,4 +91,6 @@ spec:
             # Secretから環境変数として公開鍵を読み込む
             - secretRef:
                 name: sftp-user-config
-          # 修正点：argsを削除。環境変数からユーザーが自動作成されるようにします。
+          # 修正点：argsを再度追加し、ユーザー作成を明確に指示します
+          args:
+            - "mc::0:0"
