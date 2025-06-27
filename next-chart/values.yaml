@@ -32,9 +32,11 @@ persistence:
 
 postgresql:
   enabled: true 
-
-  existingSecret: postgres-secret
-
+  auth:
+    postgresUser: ""
+    postgresPassword: ""
+    postgresDatabase: ""
+    databaseUrl: ""
   persistence:
     enabled: true
     storageClassName: nfs-client 

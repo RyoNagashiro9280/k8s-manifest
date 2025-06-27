@@ -25,10 +25,15 @@ spec:
             - name: http
               containerPort: {{ .Values.service.port }}
               protocol: TCP
+          {{- if .Values.postgresql.enabled }}
+          envFrom:
+            - secretRef:
+                name: {{ .Release.Name }}-postgres-secret
+          {{- end }}
           {{- if .Values.persistence.public.enabled }}
           volumeMounts:
             - name: public-data
-              mountPath: /app/public 
+              mountPath: /app/public
           {{- end }}
       {{- if .Values.persistence.public.enabled }}
       volumes:
@@ -36,4 +41,3 @@ spec:
           persistentVolumeClaim:
             claimName: {{ .Release.Name }}-public-pvc
       {{- end }}
-
