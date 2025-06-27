@@ -28,8 +28,7 @@ spec:
               protocol: TCP
           envFrom:
             - secretRef:
-                name: {{ .Values.postgresql.existingSecret }}
-          {{- if .Values.postgresql.persistence.enabled }}
+                name: {{ .Release.Name }}-postgres-secret
           volumeMounts:
             - name: postgres-data
               mountPath: /var/lib/postgresql/data

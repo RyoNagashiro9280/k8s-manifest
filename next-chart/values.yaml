@@ -32,9 +32,12 @@ persistence:
 
 postgresql:
   enabled: true 
-
-  existingSecret: postgres-secret
-
+  auth:
+    postgresUser: "myuser"
+    postgresPassword: "mypassword"
+    postgresDatabase: "mydb"
+    # Next.jsアプリがDBに接続するためのURL
+    databaseUrl: "postgresql://myuser:mypassword@my-nextjs-app-postgres:5432/mydb"
   persistence:
     enabled: true
     storageClassName: nfs-client 
