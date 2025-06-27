@@ -18,6 +18,12 @@ spec:
         app.kubernetes.io/name: postgres
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
+      {{- if .Values.postgresql.podSecurityContext.enabled }}
+      securityContext:
+        runAsUser: {{ .Values.postgresql.podSecurityContext.runAsUser }}
+        runAsGroup: {{ .Values.postgresql.podSecurityContext.runAsGroup }}
+        fsGroup: {{ .Values.postgresql.podSecurityContext.fsGroup }}
+      {{- end }}
       containers:
         - name: postgres
           image: "postgres:16"

@@ -37,6 +37,11 @@ postgresql:
     postgresPassword: "mypassword"
     postgresDatabase: "mydb"
     databaseUrl: "postgresql://myuser:mypassword@my-nextjs-app-postgres:5432/mydb"
+  podSecurityContext:
+    enabled: true
+    runAsUser: 999    # postgresコンテナイメージ内のpostgresユーザーのUID
+    runAsGroup: 999   # postgresコンテナイメージ内のpostgresグループのGID
+    fsGroup: 999      # マウントされたボリュームが、このグループIDによって所有されるようになります
   persistence:
     enabled: true
     storageClassName: nfs-client 
