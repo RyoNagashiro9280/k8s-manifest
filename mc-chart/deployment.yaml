@@ -13,12 +13,8 @@ spec:
   resources:
     requests:
       storage: 10Gi
-  template:
-    spec:
-      containers:
-        - image: rnagashiro/minecraft-server:25b0bd2
 ---
-# ===== 2. Minecraftサーバー用のService (統合版ポートを追加) =====
+# ===== 2. Minecraftサーバー用のService (変更なし) =====
 apiVersion: v1
 kind: Service
 metadata:
@@ -29,24 +25,14 @@ spec:
   selector:
     app: minecraft-server
   ports:
-    - name: minecraft-java
-      protocol: TCP
-      port: 25565
-      targetPort: 25565
-    # 修正点：統合版(Bedrock)用のポートを追加します
-    - name: minecraft-bedrock
-      protocol: UDP
-      port: 19132
-      targetPort: 19132
-    # dynmap用のポートを追加
-    - name: dynmap
-      protocol: TCP
-      port: 8123
-      targetPort: 8123
-  template:
-    spec:
-      containers:
-        - image: rnagashiro/minecraft-server:25b0bd2
+  - name: minecraft-java
+    protocol: TCP
+    port: 25565
+    targetPort: 25565
+  - name: minecraft-bedrock
+    protocol: UDP
+    port: 19132
+    targetPort: 19132
 ---
 # ===== 3. SFTPサーバー用のService (変更なし) =====
 apiVersion: v1
@@ -59,16 +45,12 @@ spec:
   selector:
     app: minecraft-server
   ports:
-    - name: sftp
-      protocol: TCP
-      port: 2222
-      targetPort: 2222
-  template:
-    spec:
-      containers:
-        - image: rnagashiro/minecraft-server:25b0bd2
+  - name: sftp
+    protocol: TCP
+    port: 2222
+    targetPort: 2222
 ---
-# ===== 4. Deployment (Minecraftコンテナにポートを追加) =====
+# ===== 4. Deployment (Init Containerのロジックを修正) =====
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -88,35 +70,34 @@ spec:
         - name: minecraft-data
           persistentVolumeClaim:
             claimName: minecraft-server-data-pvc
+      
+      # 修正点：Init Containerのコマンドを、初回起動とアップデートの両方に対応できるように変更
       initContainers:
-        - name: init-minecraft-data
-          image: rnagashiro/minecraft-server:latest # Minecraftサーバーと同じイメージを使用
-          command: ['sh', '-c', 'if [ ! -f /data/server.jar ]; then echo "Copying server files to new volume..."; cp -r /server/. /data/; else echo "Volume already has server files."; fi']
-          volumeMounts:
-            - name: minecraft-data
-              mountPath: /data # ボリュームを/dataにマウントして中身を確認・コピー
+      - name: init-minecraft-data
+        image: rnagashiro/minecraft-server:latest # CI/CDで更新されるイメージ
+        command: ['sh', '-c', 'if [ ! -f /data/server.properties ]; then echo "New volume detected. Copying all server files..."; cp -r /server/. /data/; else echo "Existing volume detected. Overwriting server.jar only..."; cp /server/server.jar /data/server.jar; fi']
+        volumeMounts:
+        - name: minecraft-data
+          mountPath: /data
+
       containers:
-        # ===== Minecraftコンテナ (ポートを追加) =====
+        # ===== Minecraftコンテナ (マウントパスを/dataに統一) =====
         - name: minecraft
-          image: rnagashiro/minecraft-server:25b0bd2
+          image: rnagashiro/minecraft-server:latest # CI/CDで更新されるイメージ
           stdin: true
           tty: true
           ports:
             - name: java-tcp
               containerPort: 25565
               protocol: TCP
-            # 修正点：統合版(Bedrock)用のポートを追加します
             - name: bedrock-udp
               containerPort: 19132
               protocol: UDP
-            # dynmap用のポートを追加
-            - name: dynmap-udp
-              containerPort: 8123
-              protocol: TCP
           volumeMounts:
             - name: minecraft-data
               mountPath: /data
           workingDir: /data
+
         # ===== SFTPサイドカーコンテナ (変更なし) =====
         - name: sftp-server
           image: lscr.io/linuxserver/openssh-server:latest
