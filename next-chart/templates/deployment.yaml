@@ -25,11 +25,15 @@ spec:
             - name: http
               containerPort: {{ .Values.service.port }}
               protocol: TCP
-          # livenessProbe:
-          #   httpGet:
-          #     path: /
-          #     port: http
-          # readinessProbe:
-          #   httpGet:
-          #     path: /
-          #     port: http
+          {{- if .Values.persistence.public.enabled }}
+          volumeMounts:
+            - name: public-data
+              mountPath: /app/public 
+          {{- end }}
+      {{- if .Values.persistence.public.enabled }}
+      volumes:
+        - name: public-data
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-public-pvc
+      {{- end }}
+
