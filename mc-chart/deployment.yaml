@@ -29,6 +29,10 @@ spec:
     protocol: TCP
     port: 25565
     targetPort: 25565
+  - name: minecraft-dynmap
+    protocol: TCP
+    port: 8123
+    targetPort: 8123
   - name: minecraft-bedrock
     protocol: UDP
     port: 19132
@@ -89,6 +93,9 @@ spec:
           ports:
             - name: java-tcp
               containerPort: 25565
+              protocol: TCP
+            - name: dynmap-tcp
+              containerPort: 8123
               protocol: TCP
             - name: bedrock-udp
               containerPort: 19132
