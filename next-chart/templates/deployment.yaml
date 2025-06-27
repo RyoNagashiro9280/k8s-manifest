@@ -30,8 +30,8 @@ spec:
             - secretRef:
                 name: {{ .Release.Name }}-postgres-secret
           {{- end }}
-          volumeMounts:
           {{- if .Values.persistence.public.enabled }}
+          volumeMounts:
             - name: public-data
               mountPath: /app/public
           {{- end }}

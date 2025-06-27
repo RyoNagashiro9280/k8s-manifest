@@ -29,6 +29,7 @@ spec:
           envFrom:
             - secretRef:
                 name: {{ .Release.Name }}-postgres-secret
+          {{- if .Values.postgresql.persistence.enabled }}
           volumeMounts:
             - name: postgres-data
               mountPath: /var/lib/postgresql/data
