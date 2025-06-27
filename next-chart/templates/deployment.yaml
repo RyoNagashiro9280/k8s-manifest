@@ -35,8 +35,8 @@ spec:
             - name: public-data
               mountPath: /app/public
           {{- end }}
-      volumes:
       {{- if .Values.persistence.public.enabled }}
+      volumes:
         - name: public-data
           persistentVolumeClaim:
             claimName: {{ .Release.Name }}-public-pvc
