@@ -1,47 +1,52 @@
 replicaCount: 2
 
 image:
-  repository: rnagashiro/my-nextjs-app 
+  repository: rnagashiro/my-nextjs-app
   pullPolicy: IfNotPresent
-  tag: "latest" 
+  tag: "latest"
 
 service:
   type: ClusterIP
-  port: 3000 
+  port: 3000
 
 ingress:
   enabled: true
   className: "nginx"
   annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod 
+    cert-manager.io/cluster-issuer: letsencrypt-prod
   hosts:
-    - host: infopia.nqg1t0.com 
+    - host: infopia.nqg1t0.com
       paths:
         - path: /
           pathType: Prefix
   tls:
-   - secretName: my-nextjs-app-tls 
+   - secretName: my-nextjs-app-tls
      hosts:
        - infopia.nqg1t0.com
+
 persistence:
   public:
     enabled: true
-    storageClassName: nfs-client 
-    accessMode: ReadWriteMany   
-    size: 5Gi                   
+    storageClassName: nfs-client
+    accessMode: ReadWriteMany
+    size: 5Gi
+
 
 postgresql:
-  enabled: true 
+  enabled: true
+  
   auth:
     postgresUser: "myuser"
     postgresPassword: "mypassword"
     postgresDatabase: "mydb"
     databaseUrl: "postgresql://myuser:mypassword@my-nextjs-app-postgres:5432/mydb"
+  
   podSecurityContext:
     enabled: true
-    runAsUser: 999    # postgresコンテナイメージ内のpostgresユーザーのUID
-    runAsGroup: 999   # postgresコンテナイメージ内のpostgresグループのGID
-    fsGroup: 999      # マウントされたボリュームが、このグループIDによって所有されるようになります
+    runAsUser: 999    
+    runAsGroup: 999   
+    fsGroup: 999      
+
   persistence:
     enabled: true
     storageClassName: nfs-client 
