@@ -13,6 +13,10 @@ spec:
   resources:
     requests:
       storage: 10Gi
+  template:
+    spec:
+      containers:
+        - image: rnagashiro/minecraft-server:25b0bd2
 ---
 # ===== 2. Minecraftサーバー用のService (統合版ポートを追加) =====
 apiVersion: v1
@@ -25,20 +29,24 @@ spec:
   selector:
     app: minecraft-server
   ports:
-  - name: minecraft-java
-    protocol: TCP
-    port: 25565
-    targetPort: 25565
-  # 修正点：統合版(Bedrock)用のポートを追加します
-  - name: minecraft-bedrock
-    protocol: UDP
-    port: 19132
-    targetPort: 19132
-  # dynmap用のポートを追加
-  - name: dynmap
-    protocol: TCP
-    port: 8123
-    targetPort: 8123
+    - name: minecraft-java
+      protocol: TCP
+      port: 25565
+      targetPort: 25565
+    # 修正点：統合版(Bedrock)用のポートを追加します
+    - name: minecraft-bedrock
+      protocol: UDP
+      port: 19132
+      targetPort: 19132
+    # dynmap用のポートを追加
+    - name: dynmap
+      protocol: TCP
+      port: 8123
+      targetPort: 8123
+  template:
+    spec:
+      containers:
+        - image: rnagashiro/minecraft-server:25b0bd2
 ---
 # ===== 3. SFTPサーバー用のService (変更なし) =====
 apiVersion: v1
@@ -51,10 +59,14 @@ spec:
   selector:
     app: minecraft-server
   ports:
-  - name: sftp
-    protocol: TCP
-    port: 2222
-    targetPort: 2222
+    - name: sftp
+      protocol: TCP
+      port: 2222
+      targetPort: 2222
+  template:
+    spec:
+      containers:
+        - image: rnagashiro/minecraft-server:25b0bd2
 ---
 # ===== 4. Deployment (Minecraftコンテナにポートを追加) =====
 apiVersion: apps/v1
@@ -77,16 +89,16 @@ spec:
           persistentVolumeClaim:
             claimName: minecraft-server-data-pvc
       initContainers:
-      - name: init-minecraft-data
-        image: rnagashiro/minecraft-server:latest # Minecraftサーバーと同じイメージを使用
-        command: ['sh', '-c', 'if [ ! -f /data/server.jar ]; then echo "Copying server files to new volume..."; cp -r /server/. /data/; else echo "Volume already has server files."; fi']
-        volumeMounts:
-        - name: minecraft-data
-          mountPath: /data # ボリュームを/dataにマウントして中身を確認・コピー
+        - name: init-minecraft-data
+          image: rnagashiro/minecraft-server:latest # Minecraftサーバーと同じイメージを使用
+          command: ['sh', '-c', 'if [ ! -f /data/server.jar ]; then echo "Copying server files to new volume..."; cp -r /server/. /data/; else echo "Volume already has server files."; fi']
+          volumeMounts:
+            - name: minecraft-data
+              mountPath: /data # ボリュームを/dataにマウントして中身を確認・コピー
       containers:
         # ===== Minecraftコンテナ (ポートを追加) =====
         - name: minecraft
-          image: rnagashiro/minecraft-server:latest
+          image: rnagashiro/minecraft-server:25b0bd2
           stdin: true
           tty: true
           ports:
@@ -105,7 +117,6 @@ spec:
             - name: minecraft-data
               mountPath: /data
           workingDir: /data
-
         # ===== SFTPサイドカーコンテナ (変更なし) =====
         - name: sftp-server
           image: lscr.io/linuxserver/openssh-server:latest
