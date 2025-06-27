@@ -31,11 +31,12 @@ spec:
                 name: {{ .Release.Name }}-postgres-secret
           {{- end }}
           volumeMounts:
+          {{- if .Values.persistence.public.enabled }}
             - name: public-data
               mountPath: /app/public
           {{- end }}
-      {{- if .Values.persistence.public.enabled }}
       volumes:
+      {{- if .Values.persistence.public.enabled }}
         - name: public-data
           persistentVolumeClaim:
             claimName: {{ .Release.Name }}-public-pvc
