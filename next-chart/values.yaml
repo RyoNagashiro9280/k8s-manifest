@@ -42,6 +42,14 @@ postgresql:
     postgresDatabase: "mydb"
     databaseUrl: "postgresql://myuser:mypassword@my-nextjs-app-postgres:5432/mydb"
 
+  # ★★★ ここからが追記部分 ★★★
+  # podSecurityContextはPostgreSQLのPodのセキュリティ設定です。
+  # NFSボリュームを使う際に、ファイルのパーミッション問題を解決するために必要です。
+  podSecurityContext:
+    enabled: true
+    fsGroup: 999      # マウントされたボリュームが、このグループIDによって所有されるようになります
+  # ★★★ ここまでが追記部分 ★★★
+
   persistence:
     enabled: true
     storageClassName: nfs-client
