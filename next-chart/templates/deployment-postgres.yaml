@@ -18,18 +18,14 @@ spec:
         app.kubernetes.io/name: postgres
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
-      # ★★★ ここからが修正部分 ★★★
-      # PostgreSQLコンテナが起動する前に、このinitContainerが実行される
       initContainers:
-      - name: chown-data-dir
-        # 軽量なbusyboxイメージを使用
+      - name: chmod-data-dir # 名前をchmodに変更
         image: busybox:1.36
-        # /var/lib/postgresql/data ディレクトリの所有者をpostgresユーザー(UID 999)に変更
-        command: ["sh", "-c", "chown -R 999:999 /var/lib/postgresql/data"]
+        # ★★★ ここが修正部分！ chownの代わりにchmodで書き込み権限を与える ★★★
+        command: ["sh", "-c", "chmod -R 777 /var/lib/postgresql/data"]
         volumeMounts:
         - name: postgres-data
           mountPath: /var/lib/postgresql/data
-      # ★★★ ここまでが修正部分 ★★★
       containers:
         - name: postgres
           image: "postgres:16"
